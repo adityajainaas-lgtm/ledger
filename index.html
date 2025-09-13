@@ -1559,7 +1559,6 @@ async function loadTransactionsView() {
 }
 
 // ✅ Place helper right after loadTransactionsView
-// ✅ Place helper right after loadTransactionsView
 function exportFilteredTransactions() {
     const tbody = document.getElementById('transactionsTableBody');
     const rows = tbody.querySelectorAll('tr');
@@ -1575,22 +1574,26 @@ function exportFilteredTransactions() {
 
     rows.forEach(row => {
         const cells = row.querySelectorAll('td');
-        
-        // ✅ Only export visible rows (not hidden by search/filter) and exclude total/summary rows
-        if (cells.length >= 7 && 
-            !row.classList.contains('bg-gray-100') && 
-            !row.classList.contains('font-medium') &&
-            row.style.display !== 'none') { 
-            
-            // Extract clean values with null checks
+
+        // ✅ Skip rows that don’t look like transaction rows
+        if (
+            cells.length < 7 ||                          // not enough cells
+            row.classList.contains('bg-gray-100') ||     // totals row
+            row.classList.contains('font-medium') ||     // summary row
+            row.style.display === 'none'                 // hidden rows (filtered out)
+        ) {
+            return;
+        }
+
+        try {
             const date = cells[0]?.innerText?.split("\n")[0]?.trim() || '';
-            const company = cells[1]?.innerText?.split("\n")[0]?.trim() || ''; // our own firm
-            const party = cells[1]?.innerText?.split("\n")[1]?.trim() || ''; // the second line (party)
+            const company = cells[1]?.innerText?.split("\n")[0]?.trim() || '';
+            const party = cells[1]?.innerText?.split("\n")[1]?.trim() || '';
             const type = cells[2]?.innerText?.trim() || '';
             const material = cells[3]?.innerText?.trim() || '';
             const quantity = cells[4]?.innerText?.split("\n")[0]?.trim() || '';
             const amount = cells[5]?.querySelector('.font-medium')?.innerText?.trim() || '';
-            const paid = cells[5]?.querySelector('.text-xs')?.innerText?.replace("Paid:","")?.trim() || '';
+            const paid = cells[5]?.querySelector('.text-xs')?.innerText?.replace("Paid:", "").trim() || '';
             const status = cells[6]?.innerText?.split("\n")[0]?.trim() || '';
 
             // Build CSV row
@@ -1605,12 +1608,13 @@ function exportFilteredTransactions() {
                 `"${paid}"`,
                 `"${status}"`
             ].join(",") + "\n";
-            
+
             exportedRowCount++;
+        } catch (err) {
+            console.warn("Skipping malformed row:", err, row);
         }
     });
 
-    // Check if any data was actually exported
     if (exportedRowCount === 0) {
         showNotification('No matching transactions to export', 'info');
         return;
@@ -1620,9 +1624,9 @@ function exportFilteredTransactions() {
     const blob = new Blob(["\ufeff" + csvContent], { type: "text/csv;charset=utf-8;" });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.download = `filtered_transactions_${new Date().toISOString().slice(0,10)}.csv`;
+    link.download = `filtered_transactions_${new Date().toISOString().slice(0, 10)}.csv`;
     link.click();
-    
+
     showNotification(`Exported ${exportedRowCount} transactions successfully!`, 'success');
 }
 
