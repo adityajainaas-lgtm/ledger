@@ -1559,7 +1559,6 @@ async function loadTransactionsView() {
 }
 
 // ✅ Place helper right after loadTransactionsView
-// ✅ Place helper right after loadTransactionsView
 function exportFilteredTransactions() {
     const tbody = document.getElementById('transactionsTableBody');
     const rows = tbody.querySelectorAll('tr');
@@ -1625,6 +1624,7 @@ function exportFilteredTransactions() {
     
     showNotification(`Exported ${exportedRowCount} transactions successfully!`, 'success');
 }
+
 
 // Modal Functions
 async function showAddTransactionModal() {
