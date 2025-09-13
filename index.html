@@ -1448,12 +1448,7 @@ function exportFilteredTransactions() {
 
     rows.forEach(row => {
         const cells = row.querySelectorAll('td');
-        // ✅ Only export visible rows (not hidden by search/filter) and exclude total/summary rows
-        if (cells.length >= 7 && 
-            !row.classList.contains('bg-gray-100') && 
-            row.style.display !== 'none' &&
-            !row.style.display === 'none') { 
-            
+        if (cells.length >= 7 && !row.classList.contains('bg-gray-100')) { 
             // Extract clean values
             const date = cells[0].innerText.split("\n")[0].trim();
 
@@ -1481,13 +1476,6 @@ function exportFilteredTransactions() {
             ].join(",") + "\n";
         }
     });
-
-    // Check if any data was actually exported
-    const dataRows = csvContent.split('\n').length - 2; // -2 for header and final empty line
-    if (dataRows === 0) {
-        showNotification('No matching transactions to export', 'info');
-        return;
-    }
 
     // Export as UTF-8 with BOM so Excel shows ₹ correctly
     const blob = new Blob(["\ufeff" + csvContent], { type: "text/csv;charset=utf-8;" });
