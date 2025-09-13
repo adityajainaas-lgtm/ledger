@@ -2223,31 +2223,25 @@ function initializeSearchAndFilter() {
     }
     
     if (transactionSearch) {
-    transactionSearch.addEventListener('input', function() {
-        try {
+        transactionSearch.addEventListener('input', function() {
             const searchTerm = this.value.toLowerCase();
             const rows = document.querySelectorAll('#transactionsTableBody tr');
             
             rows.forEach(row => {
-                const companyName = row.cells[1]?.textContent?.toLowerCase() || '';
-                const materialName = row.cells[3]?.textContent?.toLowerCase() || '';
-                const transactionId = row.cells[0]?.querySelector('.text-xs')?.textContent?.toLowerCase() || '';
-
-                if (companyName.includes(searchTerm) ||
-                    materialName.includes(searchTerm) ||
+                const companyName = row.cells[1].textContent.toLowerCase();
+                const materialName = row.cells[3].textContent.toLowerCase();
+                const transactionId = row.cells[0].querySelector('.text-xs')?.textContent.toLowerCase() || '';
+                
+                if (companyName.includes(searchTerm) || 
+                    materialName.includes(searchTerm) || 
                     transactionId.includes(searchTerm)) {
                     row.style.display = '';
                 } else {
                     row.style.display = 'none';
                 }
             });
-        } catch (err) {
-            console.error("Search error:", err);
-            // No popup, just log
-        }
-    });
-
-
+        });
+    }
 }
 
 // Form Handlers
@@ -2959,12 +2953,12 @@ async function initializeApp() {
 // Global Error Handling
 window.addEventListener('error', function(e) {
     console.error('Global error:', e.error);
-    showNotification('An unexpected error occurred. Please refresh the page.', 'error');
+    //showNotification('An unexpected error occurred. Please refresh the page.', 'error');
 });
 
 window.addEventListener('unhandledrejection', function(e) {
     console.error('Unhandled promise rejection:', e.reason);
-    showNotification('An unexpected error occurred. Please try again.', 'error');
+   // showNotification('An unexpected error occurred. Please try again.', 'error');
 });
 
 // Export functions for global access
