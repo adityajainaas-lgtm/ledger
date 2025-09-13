@@ -965,6 +965,13 @@ function formatDate(date) {
     return new Date(date).toLocaleDateString('en-IN');
 }
 
+// ✅ Safe cell text extractor to prevent "undefined textContent" errors
+function getCellText(cells, index) {
+    if (!cells || index >= cells.length) return '';
+    return cells[index]?.innerText?.trim() || '';
+}
+
+
 function generateTransactionNumber() {
     const now = new Date();
     const year = now.getFullYear().toString().substr(-2);
@@ -1573,28 +1580,20 @@ function exportFilteredTransactions() {
     let exportedRowCount = 0;
 
     rows.forEach(row => {
-        const cells = row.querySelectorAll('td');
+      const cells = row.querySelectorAll('td');
 
-        // ✅ Skip rows that don’t look like transaction rows
-        if (
-            cells.length < 7 ||                          // not enough cells
-            row.classList.contains('bg-gray-100') ||     // totals row
-            row.classList.contains('font-medium') ||     // summary row
-            row.style.display === 'none'                 // hidden rows (filtered out)
-        ) {
-            return;
-        }
+    // Skip rows with fewer than 7 cells (summary/total/export rows)
+      if (cells.length < 7) return;
 
-        try {
-            const date = cells[0]?.innerText?.split("\n")[0]?.trim() || '';
-            const company = cells[1]?.innerText?.split("\n")[0]?.trim() || '';
-            const party = cells[1]?.innerText?.split("\n")[1]?.trim() || '';
-            const type = cells[2]?.innerText?.trim() || '';
-            const material = cells[3]?.innerText?.trim() || '';
-            const quantity = cells[4]?.innerText?.split("\n")[0]?.trim() || '';
-            const amount = cells[5]?.querySelector('.font-medium')?.innerText?.trim() || '';
-            const paid = cells[5]?.querySelector('.text-xs')?.innerText?.replace("Paid:", "").trim() || '';
-            const status = cells[6]?.innerText?.split("\n")[0]?.trim() || '';
+    const date     = getCellText(cells, 0).split("\n")[0];
+    const company  = getCellText(cells, 1).split("\n")[0];
+    const party    = getCellText(cells, 1).split("\n")[1] || '';
+    const type     = getCellText(cells, 2);
+    const material = getCellText(cells, 3);
+    const quantity = getCellText(cells, 4).split("\n")[0];
+    const amount   = cells[5]?.querySelector('.font-medium')?.innerText?.trim() || '';
+    const paid     = cells[5]?.querySelector('.text-xs')?.innerText?.replace("Paid:", "").trim() || '';
+    const status   = getCellText(cells, 6);
 
             // Build CSV row
             csvContent += [
