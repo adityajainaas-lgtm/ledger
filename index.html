@@ -965,13 +965,6 @@ function formatDate(date) {
     return new Date(date).toLocaleDateString('en-IN');
 }
 
-// ✅ Safe cell text extractor to prevent "undefined textContent" errors
-function getCellText(cells, index) {
-    if (!cells || index >= cells.length) return '';
-    return cells[index]?.innerText?.trim() || '';
-}
-
-
 function generateTransactionNumber() {
     const now = new Date();
     const year = now.getFullYear().toString().substr(-2);
@@ -1577,23 +1570,22 @@ function exportFilteredTransactions() {
 
     // CSV header
     let csvContent = "Date,Company (Our Firm),Party,Type,Material,Quantity,Amount,Paid,Status\n";
-    let exportedRowCount = 0;
 
     rows.forEach(row => {
-      const cells = row.querySelectorAll('td');
+        const cells = row.querySelectorAll('td');
+        if (cells.length >= 7 && !row.classList.contains('bg-gray-100')) { 
+            // Extract clean values
+            const date = cells[0].innerText.split("\n")[0].trim();
 
-    // Skip rows with fewer than 7 cells (summary/total/export rows)
-      if (cells.length < 7) return;
+            const company = cells[1].innerText.split("\n")[0].trim(); // our own firm
+            const party = cells[1].innerText.split("\n")[1]?.trim() || ''; // the second line (party)
 
-    const date     = getCellText(cells, 0).split("\n")[0];
-    const company  = getCellText(cells, 1).split("\n")[0];
-    const party    = getCellText(cells, 1).split("\n")[1] || '';
-    const type     = getCellText(cells, 2);
-    const material = getCellText(cells, 3);
-    const quantity = getCellText(cells, 4).split("\n")[0];
-    const amount   = cells[5]?.querySelector('.font-medium')?.innerText?.trim() || '';
-    const paid     = cells[5]?.querySelector('.text-xs')?.innerText?.replace("Paid:", "").trim() || '';
-    const status   = getCellText(cells, 6);
+            const type = cells[2].innerText.trim();
+            const material = cells[3].innerText.trim();
+            const quantity = cells[4].innerText.split("\n")[0].trim();
+            const amount = cells[5].querySelector('.font-medium')?.innerText.trim() || '';
+            const paid = cells[5].querySelector('.text-xs')?.innerText.replace("Paid:","").trim() || '';
+            const status = cells[6].innerText.split("\n")[0].trim();
 
             // Build CSV row
             csvContent += [
@@ -1607,28 +1599,16 @@ function exportFilteredTransactions() {
                 `"${paid}"`,
                 `"${status}"`
             ].join(",") + "\n";
-
-            exportedRowCount++;
-        } catch (err) {
-            console.warn("Skipping malformed row:", err, row);
         }
     });
-
-    if (exportedRowCount === 0) {
-        showNotification('No matching transactions to export', 'info');
-        return;
-    }
 
     // Export as UTF-8 with BOM so Excel shows ₹ correctly
     const blob = new Blob(["\ufeff" + csvContent], { type: "text/csv;charset=utf-8;" });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.download = `filtered_transactions_${new Date().toISOString().slice(0, 10)}.csv`;
+    link.download = `filtered_transactions_${new Date().toISOString().slice(0,10)}.csv`;
     link.click();
-
-    showNotification(`Exported ${exportedRowCount} transactions successfully!`, 'success');
 }
-
 
 // Modal Functions
 async function showAddTransactionModal() {
@@ -2243,25 +2223,31 @@ function initializeSearchAndFilter() {
     }
     
     if (transactionSearch) {
-        transactionSearch.addEventListener('input', function() {
+    transactionSearch.addEventListener('input', function() {
+        try {
             const searchTerm = this.value.toLowerCase();
             const rows = document.querySelectorAll('#transactionsTableBody tr');
             
             rows.forEach(row => {
-                const companyName = row.cells[1].textContent.toLowerCase();
-                const materialName = row.cells[3].textContent.toLowerCase();
-                const transactionId = row.cells[0].querySelector('.text-xs')?.textContent.toLowerCase() || '';
-                
-                if (companyName.includes(searchTerm) || 
-                    materialName.includes(searchTerm) || 
+                const companyName = row.cells[1]?.textContent?.toLowerCase() || '';
+                const materialName = row.cells[3]?.textContent?.toLowerCase() || '';
+                const transactionId = row.cells[0]?.querySelector('.text-xs')?.textContent?.toLowerCase() || '';
+
+                if (companyName.includes(searchTerm) ||
+                    materialName.includes(searchTerm) ||
                     transactionId.includes(searchTerm)) {
                     row.style.display = '';
                 } else {
                     row.style.display = 'none';
                 }
             });
-        });
-    }
+        } catch (err) {
+            console.error("Search error:", err);
+            // No popup, just log
+        }
+    });
+}
+
 }
 
 // Form Handlers
